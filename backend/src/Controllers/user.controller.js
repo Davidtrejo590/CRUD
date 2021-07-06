@@ -33,10 +33,10 @@ userController.postUser = async (request, response) => {
 
 /* PUT */
 userController.putUser = async (request, response) => {
-    const { name, lastName, web, countrie } = request.body;
+    const { name, email, web, countrie } = request.body;
     await User.findOneAndUpdate({_id: request.params.id}, {
         name: name,
-        lastName: lastName,
+        email: email,
         web: web,
         countrie: countrie
     });
