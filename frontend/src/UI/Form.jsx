@@ -1,76 +1,86 @@
-import React, { useState } from 'react'
-import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import Input from '@material-ui/core/Input';
+import React from 'react'
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/styles'
+import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import axios from 'axios';
 
-const useStyles = makeStyles((theme) => ({
+const styles = theme => ({
   root: {
-    flexGrow: 1,
-    padding: '5px',
+    '& > *': {
+      margin: 2,
+      width: '25ch',
+      padding: '10px',
+    },
   },
-  paper: {
-    padding: theme.spacing(2),
-    textAlign: 'center',
-    color: theme.palette.text.secondary,
-  },
-}));
+});
 
-export default function Form(props) {
-  const classes = useStyles();
+class Form extends React.Component{
 
-  /* Data from Inputs */
-  const [name, setName] = useState(``);
-  const [email, setEmail] = useState(``);
-  const [web, setWeb] = useState(``);
-  const [location, setLocation] = useState(``);
+  state = {}
 
 
-  const nameHandler = ( event ) => {
-    setName(event.target.value);
+  onChangeData = (event) => {
+    this.setState({
+      [event.target.name]: event.target.value
+    });
   }
 
-  const emailHandler = ( event ) => {
-    setEmail(event.target.value);
+  sendData = (event) => {
+    event.preventDefault();
+    console.log('Send Data', this.state);
+    const newUser = {
+      name: this.state.name,
+      email: this.state.email,
+      web: this.state.web,
+      countrie: this.state.countrie
+    }
+
+    if(this.props.match.params.id){
+      axios.put('http://localhost:4000/api/users/' + this.props.match.params.id, newUser)
+      console.log("User Updated");
+    }else{
+      /* POST to users API */
+      axios.post('http://localhost:4000/api/users', newUser)
+      console.log("User Added");
+    }
+
+  
+    // Return Home
+    window.location.href = '/';
   }
 
-  const webHandler = ( event ) => {
-    setWeb(event.target.value);
+  componentDidMount(){
+    if(this.props.match.params.id){
+      axios.get('http://localhost:4000/api/users/' + this.props.match.params.id)
+            .then(request => {
+                const user = request.data;
+                this.setState({ name: user.name, email: user.email, web: user.web, countrie: user.countrie });
+            })
+            .catch(error => {
+                this.setState({ data: null, error: error });
+            })
+      
+    }
   }
 
-  const locationHandler = ( event ) => {
-    setLocation(event.target.value);
+  render(){
+    const { classes } = this.props;
+  
+    return(
+      <form className={classes.root} noValidate autoComplete="off">
+          <TextField id="outlined-basic" name="name" placeholder="Name" onChange={this.onChangeData}/>
+          <TextField id="outlined-basic" name="email" placeholder="Email" onChange={this.onChangeData}/>
+          <TextField id="outlined-basic" name="web" placeholder="Web" onChange={this.onChangeData}/>
+          <TextField id="outlined-basic" name="countrie" placeholder="Location" onChange={this.onChangeData}/>
+          <Button onClick={this.sendData}>Send</Button>
+        </form>
+    );
   }
-
-   /* Send Data */
-  const addClickHandler = ( event ) => {
-    console.log(`In Form Component, Name: ${name}, Email: ${email}, Web: ${web}, Location: ${location}`);
-    props.formHandler(name, email, web, location);
-    setName(``);
-    setEmail(``);
-    setWeb(``);
-    setLocation(``);
-  }
-
-  return (
-    <div className={classes.root}>
-      <Grid container direction="row" justify="space-evenly" alignItems="stretch" spacing={5}>
-        <Grid item >
-          <Input fullWidth placeholder="Name" inputProps={{ 'aria-label': 'description' }} value={name} onChange={nameHandler}/>
-        </Grid>
-        <Grid item >
-          <Input fullWidth placeholder="Email" inputProps={{ 'aria-label': 'description' }} value={email} onChange={emailHandler}/>
-        </Grid>
-        <Grid item >
-          <Input fullWidth placeholder="Web" inputProps={{ 'aria-label': 'description' }} value={web} onChange={webHandler}/>
-        </Grid>
-        <Grid item >
-          <Input fullWidth placeholder="Location" inputProps={{ 'aria-label': 'description'}} value={location} onChange={locationHandler}/>
-        </Grid>
-        <Grid item >
-          <Button fullWidth variant="contained" color="secondary" onClick={addClickHandler}>Add User</Button>
-        </Grid>
-      </Grid>
-    </div>
-  );
 }
+
+Form.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+export default withStyles(styles)(Form);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import VisibilityOutlinedIcon from '@material-ui/icons/VisibilityOutlined';
 import DeleteOutlineOutlinedIcon from '@material-ui/icons/DeleteOutlineOutlined';
@@ -12,8 +12,7 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import InfoDialog from './Dialog';
-import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const StyledTableCell = withStyles((theme) => ({
   head: {
@@ -48,22 +47,24 @@ export default function TableUsers(props) {
   const classes = useStyles();
 
   // States for Data
-  const[data, setData] = useState([]);
-  const userData = props;
+  const userData = props.data;
+  console.log(userData)
 
-  useEffect ( () => {
-    setData(userData.data.data);
-  }, [userData.data.data]); 
-
-  const deletedUserHandler = (index) => {
-    // console.log('Item will be deleted: ', index);
-    const usersUpdate = [...data];
-    usersUpdate.splice(index, 1);
-    setData(usersUpdate);
+  const deletedUserHandler = (idUser) => {
+    console.log('Item will be deleted: ', idUser);
+    axios.delete('http://localhost:4000/api/users/' + idUser);
+    window.location.href = '/';
   }
 
-  const viewUserHandler = ( index ) => {
-    return data[index];
+  const viewUserHandler = (idUser) => {
+    axios.get('http://localhost:4000/api/users/' + idUser)
+      .then(request => {
+        window.location.href = '/info/' + idUser;
+      })
+  }
+
+  const editUserHandler = (idUser) => {
+    window.location.href = '/update/' + idUser;
   }
 
   return (
@@ -71,41 +72,39 @@ export default function TableUsers(props) {
       <Table className={classes.table} aria-label="customized table">
         <TableHead>
           <TableRow>
-            <StyledTableCell>Name</StyledTableCell>
+            <StyledTableCell align="right">Name</StyledTableCell>
             <StyledTableCell align="right">Email</StyledTableCell>
             <StyledTableCell align="right">Web</StyledTableCell>
             <StyledTableCell align="right">Location</StyledTableCell>
+            <StyledTableCell align="right"></StyledTableCell>
             <StyledTableCell align="right">Actions</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-            {
-              
-              data?.map( (user, index) => {
-                return(
-                  <StyledTableRow key={index} tabIndex={-1}>
-                    {
-                      Object.values(user).map((value, index) => {
-                        return(
-                          index === 0 ? <StyledTableCell key={index}>{value}</StyledTableCell> : <StyledTableCell align="right" key={index}>{value}</StyledTableCell>
-                        );
-                      })
-                    }
-                    <StyledTableCell align="right" className={classes.actions}>
-                      <InfoDialog info={viewUserHandler(index)}>
-                        <VisibilityOutlinedIcon style={{ color: yellow[800] }}/>
-                      </InfoDialog>
+          {
 
-                      <Link color="primary" to={'/update/' + index}>
+            userData?.map((user, index) => {
+              return (
+                <StyledTableRow key={index} tabIndex={-1}>
+                  {
+                    Object.values(user).map((value, index) => {
+                      return (
+                        index === 4 ? <StyledTableCell key={index}></StyledTableCell> : <StyledTableCell align="right" key={index}>{value}</StyledTableCell>
+                      );
+                    })
+
+                  }
+                  <StyledTableCell align="right" className={classes.actions}>
+                    <IconButton onClick={() => { viewUserHandler(user.id); }}><VisibilityOutlinedIcon style={{ color: yellow[800] }} /></IconButton>
+                    <IconButton onClick={() => { editUserHandler(user.id);}}>
                         <EditOutlinedIcon style={{ color: green[500] }} />
-                      </Link>
-
-                      <IconButton onClick={() => {deletedUserHandler(index);}}><DeleteOutlineOutlinedIcon style={{ color: red[500] }}/></IconButton>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                );
-              })
-            }
+                    </IconButton>
+                    <IconButton onClick={() => { deletedUserHandler(user.id); }}><DeleteOutlineOutlinedIcon style={{ color: red[500] }} /></IconButton>
+                  </StyledTableCell>
+                </StyledTableRow>
+              );
+            })
+          }
         </TableBody>
       </Table>
     </TableContainer>
